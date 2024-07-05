@@ -1,0 +1,59 @@
+logtostderr False
+alsologtostderr False
+log_dir 
+v 0
+verbosity 0
+logger_levels {}
+stderrthreshold fatal
+showprefixforinfo True
+run_with_pdb False
+pdb_post_mortem False
+pdb False
+run_with_profiling False
+profile_file None
+use_cprofile_for_profiling True
+only_check_args False
+root_dir test
+gin_file None
+gin_param None
+num_iterations 1000000
+initial_collect_steps 1000
+collect_steps_per_iteration 1
+num_parallel_environments 1
+num_parallel_environments_eval 1
+replay_buffer_capacity 1000000
+train_steps_per_iteration 1
+batch_size 128
+gamma 0.99
+actor_learning_rate 0.0003
+critic_learning_rate 0.0003
+alpha_learning_rate 0.0003
+num_eval_episodes 10
+eval_interval 10000
+eval_only False
+eval_deterministic False
+gpu_c 1
+config_file gibson_extension/examples/configs/locobot_point_nav.yaml
+agent_config_file ../configs/agent.yaml
+model_ids ['Rs_int']
+model_ids_eval None
+env_mode headless
+action_timestep 0.1
+physics_timestep 0.025
+gpu_g 1
+random_position False
+? False
+help False
+helpshort False
+helpfull False
+helpxml False
+Compiling GLSL shader: /home/wenhao/RL/iGibson/gibson2/render/mesh_renderer/shaders/450/equirect2cube_cs.glsl
+Compiling GLSL shader: /home/wenhao/RL/iGibson/gibson2/render/mesh_renderer/shaders/450/spmap_cs.glsl
+Compiling GLSL shader: /home/wenhao/RL/iGibson/gibson2/render/mesh_renderer/shaders/450/irmap_cs.glsl
+Compiling GLSL shader: /home/wenhao/RL/iGibson/gibson2/render/mesh_renderer/shaders/450/spbrdf_cs.glsl
+Loading image: /home/wenhao/RL/iGibson/gibson2/data/ig_dataset/scenes/background/photo_studio_01_2k.hdr
+INFO: compiled pbr shaders
+******************PyBullet Logging Information:
+PyBullet Logging Information******************
+Dict('task_obs': Box(-inf, inf, (4,), float32), 'rgb': Box(0.0, 1.0, (360, 640, 3), float32), 'depth': Box(0.0, 1.0, (360, 640, 1), float32))
+Dict('prev_action': Box(-1.0, 1.0, (2,), float32))
