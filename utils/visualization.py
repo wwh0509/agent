@@ -58,7 +58,7 @@ def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
     if "rgb" in observation:
         rgb = observation["rgb"]
         if not isinstance(rgb, np.ndarray):
-            rgb = rgb.cpu().numpy()
+            rgb = rgb.squeeze(0).cpu().numpy() * 255.0
 
         egocentric_view_l.append(rgb)
 

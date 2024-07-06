@@ -29,7 +29,7 @@ class BaseTrainer:
     def train(self) -> None:
         return NotImplementedError
     
-    def eval(self, env_load_fn) -> None:
+    def eval(self, env_load_fn, model_ids) -> None:
         self.device = (
             torch.device("cuda", self.config.TORCH_GPU_ID)
             if torch.cuda.is_available()
@@ -62,6 +62,8 @@ class BaseTrainer:
                     self.config.EVAL_CKPT_PATH_DIR,
                     writer,
                     checkpoint_index=ckpt_idx,
+                    env_load_fn=env_load_fn,
+                    model_ids=model_ids
                 )
             else:
                 # evaluate multiple checkpoints in order
@@ -80,6 +82,7 @@ class BaseTrainer:
                         writer=writer,
                         checkpoint_index=prev_ckpt_ind,
                         env_load_fn = env_load_fn,
+                        model_ids = model_ids,
 
                     )
 
@@ -99,7 +102,41 @@ class BaseTrainer:
     def load_checkpoint(self, checkpoint_path, *args, **kwargs) -> Dict:
         raise NotImplementedError
         
+    def _setup_eval_config(self, checkpoint_config: Config) -> Config:
+        r"""Sets up and returns a merged config for evaluation. Config
+            object saved from checkpoint is merged into config file specified
+            at evaluation time with the following overwrite priority:
+                  eval_opts > ckpt_opts > eval_cfg > ckpt_cfg
+            If the saved config is outdated, only the eval config is returned.
 
+        Args:
+            checkpoint_config: saved config from checkpoint.
+
+        Returns:
+            Config: merged config for eval.
+        """
+
+        config = self.config.clone()
+
+        ckpt_cmd_opts = checkpoint_config.CMD_TRAILING_OPTS
+        eval_cmd_opts = config.CMD_TRAILING_OPTS
+
+        try:
+            config.merge_from_other_cfg(checkpoint_config)
+            config.merge_from_other_cfg(self.config)
+            config.merge_from_list(ckpt_cmd_opts)
+            config.merge_from_list(eval_cmd_opts)
+        except KeyError:
+            logging.info("Saved config is outdated, using solely eval config")
+            config = self.config.clone()
+            config.merge_from_list(eval_cmd_opts)
+        config.defrost()
+        # if config.TASK_CONFIG.DATASET.SPLIT == "train":
+        #     config.TASK_CONFIG.DATASET.SPLIT = "val"
+        # config.TASK_CONFIG.SIMULATOR.AGENT_0.SENSORS = self.config.SENSORS
+        config.freeze()
+
+        return config
 
 
 class BaseRLTrainer(BaseTrainer):

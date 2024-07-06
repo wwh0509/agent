@@ -1,17 +1,17 @@
 
 from typing import Dict, Tuple
-from agent.policy.policy import Policy,Net
+from tf_agents.agents.policy.policy import Policy,Net
 from gym import spaces
-from agent.gibson_extension.examples.configs.default import Config
+from tf_agents.gibson_extension.examples.configs.default import Config
 import torch.nn as nn
-from agent.policy.running_mean_and_var import (
+from tf_agents.agents.policy.running_mean_and_var import (
     RunningMeanAndVar,
 )
 import torch
 from torch.nn import functional as F
-from agent.policy import resnet
+from tf_agents.agents.policy import resnet
 import numpy as np
-from agent.models.rnn_state_encoder import (
+from tf_agents.agents.models.rnn_state_encoder import (
     build_rnn_state_encoder,
 )
 
@@ -306,6 +306,7 @@ class PointNavResNetNet(Net):
         prev_actions = self.prev_action_embedding(
             prev_actions
         )
+
 
         x.append(prev_actions)
 

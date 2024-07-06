@@ -13,6 +13,7 @@ from absl import app
 from absl import flags
 from absl import logging
 import contextlib
+import imageio
 import torch.nn as nn
 import gin
 import tqdm
@@ -379,7 +380,8 @@ class PPOTrainer(BaseRLTrainer):
         checkpoint_path: str,
         writer: TensorboardWriter,
         checkpoint_index: int = 0,
-        env_load_fn: Any = None
+        env_load_fn: Any = None,
+        model_ids: Any = None,
     ) -> None:
         r"""Evaluates a single checkpoint.
 
@@ -391,8 +393,9 @@ class PPOTrainer(BaseRLTrainer):
         Returns:
             None
         """
+        imageio.plugins.ffmpeg.download()
         ckpt_dict = self.load_checkpoint(checkpoint_path, map_location="cpu")
-
+        self.gpu = self.FLAGS.gpu_c
         if self.config.EVAL.USE_CKPT_CONFIG:
             config = self._setup_eval_config(ckpt_dict["config"])
         else:
@@ -401,20 +404,20 @@ class PPOTrainer(BaseRLTrainer):
         ppo_cfg = config.RL.PPO
 
         config.defrost()
-        config.TASK_CONFIG.DATASET.SPLIT = config.EVAL.SPLIT
+        # config.TASK_CONFIG.DATASET.SPLIT = config.EVAL.SPLIT
         config.freeze()
 
         if len(self.config.VIDEO_OPTION) > 0:
             config.defrost()
-            config.TASK_CONFIG.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
-            config.TASK_CONFIG.TASK.MEASUREMENTS.append("COLLISIONS")
+            # config.TASK_CONFIG.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
+            # config.TASK_CONFIG.TASK.MEASUREMENTS.append("COLLISIONS")
             config.freeze()
 
         if config.VERBOSE:
             logging.info(f"env config: {config}")
-
+        self.model_ids = model_ids
         self.init_envs(env_load_fn)
-        self.set_agent(ppo_cfg)
+        self.set_agent()
 
         self.agent.load_state_dict(ckpt_dict["state_dict"])
         self.actor_critic = self.agent.actor_critic
@@ -429,7 +432,7 @@ class PPOTrainer(BaseRLTrainer):
         for i in range(batch_size):
             item = {}
             for key in observations:
-                item[key] = observations[key][i]
+                item[key] = observations[key][i].astype(np.float32)
             formatted_data.append(item)
         observations = formatted_data
         self._obs_batching_cache = ObservationBatchingCache()
@@ -452,7 +455,7 @@ class PPOTrainer(BaseRLTrainer):
             self.config.NUM_ENVIRONMENTS,
             2,
             device=self.device,
-            dtype=torch.long,
+            dtype=torch.float32,
         )
         not_done_masks = torch.zeros(
             self.config.NUM_ENVIRONMENTS,
@@ -500,7 +503,7 @@ class PPOTrainer(BaseRLTrainer):
             # in the subprocesses.
             # For backwards compatibility, we also call .item() to convert to
             # an int
-            step_data = [a.item() for a in actions.to(device="cpu")]
+            step_data = [a for a in actions.to(device="cpu")]
 
             outputs = self.tf_env.step(step_data)
 
@@ -514,7 +517,7 @@ class PPOTrainer(BaseRLTrainer):
             for i in range(batch_size):
                 item = {}
                 for key in observations:
-                    item[key] = observations[key][i]
+                    item[key] = observations[key][i].astype(np.float32)
                 formatted_data.append(item)
             observations = formatted_data
 
@@ -538,7 +541,7 @@ class PPOTrainer(BaseRLTrainer):
 
             rewards = torch.tensor(
                 rewards_l, dtype=torch.float, device="cpu"
-            ).unsqueeze(1)
+            )
             current_episode_reward += rewards
             n_envs = self.num_parallel_environments
             for i in range(n_envs):
@@ -549,19 +552,19 @@ class PPOTrainer(BaseRLTrainer):
                     episode_stats = {}
                     episode_stats["reward"] = current_episode_reward[i].item()
                     episode_stats.update(
-                        self._extract_scalars_from_info(info[i])
+                        self._extract_scalars_from_info(info)
                     )
                     current_episode_reward[i] = 0
-                    stats_episodes[self.tf_env._env[0].current_episode] = episode_stats
+                    stats_episodes[self.tf_env._env._envs[0].current_episode] = episode_stats
 
                     if len(self.config.VIDEO_OPTION) > 0:
                         generate_video(
                             video_option=self.config.VIDEO_OPTION,
                             video_dir=self.config.VIDEO_DIR,
                             images=rgb_frames[i],
-                            episode_id=self.tf_env._env[0].current_episode,
+                            episode_id=self.tf_env._env._envs[0].current_episode,
                             checkpoint_idx=checkpoint_index,
-                            metrics=self._extract_scalars_from_info(info[i]),
+                            metrics=self._extract_scalars_from_info(info),
                             tb_writer=writer,
                         )
 
@@ -571,7 +574,7 @@ class PPOTrainer(BaseRLTrainer):
                 elif len(self.config.VIDEO_OPTION) > 0:
                     # TODO move normalization / channel changing out of the policy and undo it here
                     frame = observations_to_image(
-                        {k: v[i] for k, v in batch.items()}, info[i]
+                        {k: v for k, v in batch.items() if k != 'task_obs'}, info
                     )
                     rgb_frames[i].append(frame)
 

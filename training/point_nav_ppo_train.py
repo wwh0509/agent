@@ -2,8 +2,9 @@
 from agent.trainer.ppo_trainer import PPOTrainer
 from absl import flags, app
 from agent.environments import suite_gibson
+import os
 
-flags.DEFINE_string('root_dir', "test",
+flags.DEFINE_string('root_dir', os.getenv('TEST_UNDECLARED_OUTPUTS_DIR'),
                     'Root directory for writing logs/summaries/checkpoints.')
 flags.DEFINE_multi_string('gin_file', None,
                           'Path to the gin config files.')
@@ -12,7 +13,7 @@ flags.DEFINE_multi_string('gin_param', None,
 
 flags.DEFINE_integer('num_iterations', 1000000,
                      'Total number train/eval iterations to perform.')
-flags.DEFINE_integer('initial_collect_steps', 256,
+flags.DEFINE_integer('initial_collect_steps', 1000,
                      'Number of steps to collect at the beginning of training using random policy')
 flags.DEFINE_integer('collect_steps_per_iteration', 1,
                      'Number of steps to collect and be added to the replay buffer after every training iteration')
@@ -20,7 +21,7 @@ flags.DEFINE_integer('num_parallel_environments', 1,
                      'Number of environments to run in parallel')
 flags.DEFINE_integer('num_parallel_environments_eval', 1,
                      'Number of environments to run in parallel for eval')
-flags.DEFINE_integer('replay_buffer_capacity', 10000,
+flags.DEFINE_integer('replay_buffer_capacity', 1000000,
                      'Replay buffer capacity per env.')
 flags.DEFINE_integer('train_steps_per_iteration', 1,
                      'Number of training steps in every training iteration')
@@ -40,19 +41,19 @@ flags.DEFINE_float('alpha_learning_rate', 3e-4,
 
 flags.DEFINE_integer('num_eval_episodes', 10,
                      'The number of episodes to run eval on.')
-flags.DEFINE_integer('eval_interval', 10000000,
+flags.DEFINE_integer('eval_interval', 10000,
                      'Run eval every eval_interval train steps')
-flags.DEFINE_boolean('eval_only', True,
+flags.DEFINE_boolean('eval_only', False,
                      'Whether to run evaluation only on trained checkpoints')
 flags.DEFINE_boolean('eval_deterministic', False,
                      'Whether to run evaluation using a deterministic policy')
-flags.DEFINE_integer('gpu_c', 0,
+flags.DEFINE_integer('gpu_c', 1,
                      'GPU id for compute, e.g. Tensorflow.')
 
 # Added for Gibson
-flags.DEFINE_string('config_file', "gibson_extension/examples/configs/locobot_point_nav.yaml",
+flags.DEFINE_string('config_file', None,
                     'Config file for the experiment.')
-flags.DEFINE_string('agent_config_file', "../configs/agent.yaml",
+flags.DEFINE_string('agent_config_file', None,
                     'Config file for the agent.')
 flags.DEFINE_list('model_ids', None,
                   'A comma-separated list of model ids to overwrite config_file.'
@@ -66,7 +67,7 @@ flags.DEFINE_float('action_timestep', 1.0 / 10.0,
                    'Action timestep for the simulator')
 flags.DEFINE_float('physics_timestep', 1.0 / 40.0,
                    'Physics timestep for the simulator')
-flags.DEFINE_integer('gpu_g', 0,
+flags.DEFINE_integer('gpu_g', 1,
                      'GPU id for graphics, e.g. Gibson.')
 flags.DEFINE_boolean('random_position', False,
                      'Whether to randomize initial and target position')
@@ -98,6 +99,7 @@ def main(argv):
                 physics_timestep=FLAGS.physics_timestep,
                 device_idx=device_idx,
             ),
+            model_ids=FLAGS.model_ids
         )
 
 if __name__ == '__main__':

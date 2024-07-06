@@ -2,7 +2,7 @@ from gibson2.utils.utils import quatToXYZW
 from gibson2.envs.env_base import BaseEnv
 from gibson2.tasks.room_rearrangement_task import RoomRearrangementTask
 from agent.gibson_extension.tasks.point_nav_fixed_task import PointNavFixedTask
-from gibson2.tasks.point_nav_random_task import PointNavRandomTask
+from agent.gibson_extension.tasks.point_nav_random_task import PointNavRandomTask
 from gibson2.tasks.interactive_nav_random_task import InteractiveNavRandomTask
 from gibson2.tasks.dynamic_nav_random_task import DynamicNavRandomTask
 from gibson2.tasks.social_nav_random_task import SocialNavRandomTask
