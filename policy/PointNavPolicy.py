@@ -1,17 +1,17 @@
 
 from typing import Dict, Tuple
-from tf_agents.agents.policy.policy import Policy,Net
+from agent.policy.policy import Policy,Net
 from gym import spaces
-from tf_agents.gibson_extension.examples.configs.default import Config
+from agent.gibson_extension.examples.configs.default import Config
 import torch.nn as nn
-from tf_agents.agents.policy.running_mean_and_var import (
+from agent.policy.running_mean_and_var import (
     RunningMeanAndVar,
 )
 import torch
 from torch.nn import functional as F
-from tf_agents.agents.policy import resnet
+from agent.policy import resnet
 import numpy as np
-from tf_agents.agents.models.rnn_state_encoder import (
+from agent.models.rnn_state_encoder import (
     build_rnn_state_encoder,
 )
 
