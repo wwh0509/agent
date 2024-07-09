@@ -5,7 +5,7 @@ import gin
 from agent.environments import gym_wrapper
 from agent.environments import wrappers
 from agent.gibson_extension.envs.igibson_env import iGibsonEnv
-import gibson2
+import igibson
 import agent
 
 @gin.configurable

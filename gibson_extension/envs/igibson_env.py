@@ -1,16 +1,15 @@
-from gibson2.utils.utils import quatToXYZW
-from gibson2.envs.env_base import BaseEnv
-from gibson2.tasks.room_rearrangement_task import RoomRearrangementTask
+from igibson.utils.utils import quatToXYZW
+from igibson.envs.env_base import BaseEnv
+from igibson.tasks.room_rearrangement_task import RoomRearrangementTask
 from agent.gibson_extension.tasks.point_nav_fixed_task import PointNavFixedTask
 from agent.gibson_extension.tasks.point_nav_random_task import PointNavRandomTask
-from gibson2.tasks.interactive_nav_random_task import InteractiveNavRandomTask
-from gibson2.tasks.dynamic_nav_random_task import DynamicNavRandomTask
-from gibson2.tasks.social_nav_random_task import SocialNavRandomTask
-from gibson2.tasks.reaching_random_task import ReachingRandomTask
-from gibson2.sensors.scan_sensor import ScanSensor
-from gibson2.sensors.vision_sensor import VisionSensor
-from gibson2.robots.robot_base import BaseRobot
-from gibson2.external.pybullet_tools.utils import stable_z_on_aabb
+from igibson.tasks.interactive_nav_random_task import InteractiveNavRandomTask
+from igibson.tasks.dynamic_nav_random_task import DynamicNavRandomTask
+from igibson.tasks.reaching_random_task import ReachingRandomTask
+from igibson.sensors.scan_sensor import ScanSensor
+from igibson.sensors.vision_sensor import VisionSensor
+from igibson.robots.robot_base import BaseRobot
+from igibson.external.pybullet_tools.utils import stable_z_on_aabb
 
 from transforms3d.euler import euler2quat
 from collections import OrderedDict
@@ -54,7 +53,7 @@ class iGibsonEnv(BaseEnv):
                                          action_timestep=action_timestep,
                                          physics_timestep=physics_timestep,
                                          device_idx=device_idx,
-                                         render_to_tensor=render_to_tensor)
+                                         )
         self.automatic_reset = automatic_reset
 
     def load_task_setup(self):
@@ -93,8 +92,6 @@ class iGibsonEnv(BaseEnv):
             self.task = InteractiveNavRandomTask(self)
         elif self.config['task'] == 'dynamic_nav_random':
             self.task = DynamicNavRandomTask(self)
-        elif self.config['task'] == 'social_nav_random':
-            self.task = SocialNavRandomTask(self)
         elif self.config['task'] == 'reaching_random':
             self.task = ReachingRandomTask(self)
         elif self.config['task'] == 'room_rearrangement':
@@ -347,7 +344,7 @@ class iGibsonEnv(BaseEnv):
             offset = self.initial_pos_z_offset
 
         is_robot = isinstance(obj, BaseRobot)
-        body_id = obj.robot_ids[0] if is_robot else obj.body_id
+        body_id = obj._body_ids[0] if is_robot else obj.body_id
         # first set the correct orientation
         obj.set_position_orientation(pos, quatToXYZW(euler2quat(*orn), 'wxyz'))
         # compute stable z based on this orientation
