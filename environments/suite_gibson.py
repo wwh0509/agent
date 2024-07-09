@@ -4,8 +4,8 @@ import gin
 
 from agent.environments import gym_wrapper
 from agent.environments import wrappers
-from agent.gibson_extension.envs.igibson_env import iGibsonEnv
-import igibson
+from agent.gibson_extension.envs.igibson_env import igibsonEnv
+import gibson2
 import agent
 
 @gin.configurable
@@ -19,7 +19,7 @@ def load(config_file,
          env_wrappers=(),
          spec_dtype_map=None):
     config_file = os.path.join(os.path.dirname(agent.__file__), config_file)
-    env = iGibsonEnv(config_file=config_file,
+    env = igibsonEnv(config_file=config_file,
                      scene_id=model_id,
                      mode=env_mode,
                      action_timestep=action_timestep,

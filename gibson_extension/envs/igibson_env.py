@@ -1,15 +1,15 @@
-from igibson.utils.utils import quatToXYZW
-from igibson.envs.env_base import BaseEnv
-from igibson.tasks.room_rearrangement_task import RoomRearrangementTask
+from gibson2.utils.utils import quatToXYZW
+from gibson2.envs.env_base import BaseEnv
+from gibson2.tasks.room_rearrangement_task import RoomRearrangementTask
 from agent.gibson_extension.tasks.point_nav_fixed_task import PointNavFixedTask
 from agent.gibson_extension.tasks.point_nav_random_task import PointNavRandomTask
-from igibson.tasks.interactive_nav_random_task import InteractiveNavRandomTask
-from igibson.tasks.dynamic_nav_random_task import DynamicNavRandomTask
-from igibson.tasks.reaching_random_task import ReachingRandomTask
-from igibson.sensors.scan_sensor import ScanSensor
-from igibson.sensors.vision_sensor import VisionSensor
-from igibson.robots.robot_base import BaseRobot
-from igibson.external.pybullet_tools.utils import stable_z_on_aabb
+from gibson2.tasks.interactive_nav_random_task import InteractiveNavRandomTask
+from gibson2.tasks.dynamic_nav_random_task import DynamicNavRandomTask
+from gibson2.tasks.reaching_random_task import ReachingRandomTask
+from gibson2.sensors.scan_sensor import ScanSensor
+from gibson2.sensors.vision_sensor import VisionSensor
+from gibson2.robots.robot_base import BaseRobot
+from gibson2.external.pybullet_tools.utils import stable_z_on_aabb
 
 from transforms3d.euler import euler2quat
 from collections import OrderedDict
@@ -21,9 +21,9 @@ import time
 import logging
 
 
-class iGibsonEnv(BaseEnv):
+class igibsonEnv(BaseEnv):
     """
-    iGibson Environment (OpenAI Gym interface)
+    gibson2 Environment (OpenAI Gym interface)
     """
 
     def __init__(
@@ -47,7 +47,7 @@ class iGibsonEnv(BaseEnv):
         :param render_to_tensor: whether to render directly to pytorch tensors
         :param automatic_reset: whether to automatic reset after an episode finishes
         """
-        super(iGibsonEnv, self).__init__(config_file=config_file,
+        super(igibsonEnv, self).__init__(config_file=config_file,
                                          scene_id=scene_id,
                                          mode=mode,
                                          action_timestep=action_timestep,
@@ -209,7 +209,7 @@ class iGibsonEnv(BaseEnv):
         """
         Load environment
         """
-        super(iGibsonEnv, self).load()
+        super(igibsonEnv, self).load()
         self.load_task_setup()
         self.load_observation_space()
         self.load_action_space()
@@ -459,7 +459,7 @@ if __name__ == '__main__':
                         help='which mode for simulation (default: headless)')
     args = parser.parse_args()
 
-    env = iGibsonEnv(config_file=args.config,
+    env = igibsonEnv(config_file=args.config,
                      mode=args.mode,
                      action_timestep=1.0 / 10.0,
                      physics_timestep=1.0 / 40.0)
