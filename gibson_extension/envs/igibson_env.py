@@ -244,7 +244,7 @@ class iGibsonEnv(BaseEnv):
         """
         self.simulator_step()
         collision_links = list(p.getContactPoints(
-            bodyA=self.robots[0].robot_ids[0]))
+            bodyA=self.robots[0].get_body_ids()[0]))
         return self.filter_collision_links(collision_links)
 
     def filter_collision_links(self, collision_links):
@@ -265,7 +265,7 @@ class iGibsonEnv(BaseEnv):
                 continue
 
             # ignore self collision with robot link a (body b is also robot itself)
-            if item[2] == self.robots[0].robot_ids[0] and item[4] in self.collision_ignore_link_a_ids:
+            if item[2] == self.robots[0].get_body_ids()[0] and item[4] in self.collision_ignore_link_a_ids:
                 continue
             new_collision_links.append(item)
         return new_collision_links
@@ -344,7 +344,7 @@ class iGibsonEnv(BaseEnv):
             offset = self.initial_pos_z_offset
 
         is_robot = isinstance(obj, BaseRobot)
-        body_id = obj._body_ids[0] if is_robot else obj.body_id
+        body_id = obj.get_body_ids()[0] if is_robot else obj.body_id
         # first set the correct orientation
         obj.set_position_orientation(pos, quatToXYZW(euler2quat(*orn), 'wxyz'))
         # compute stable z based on this orientation
@@ -367,10 +367,10 @@ class iGibsonEnv(BaseEnv):
         self.set_pos_orn_with_z_offset(obj, pos, orn)
 
         if is_robot:
-            obj.robot_specific_reset()
+            obj.reset()
             obj.keep_still()
 
-        body_id = obj.robot_ids[0] if is_robot else obj.body_id
+        body_id = obj.get_body_ids()[0] if is_robot else obj.body_id
         has_collision = self.check_collision(body_id)
         return has_collision
 
@@ -387,10 +387,10 @@ class iGibsonEnv(BaseEnv):
         self.set_pos_orn_with_z_offset(obj, pos, orn)
 
         if is_robot:
-            obj.robot_specific_reset()
+            obj.reset()
             obj.keep_still()
 
-        body_id = obj.robot_ids[0] if is_robot else obj.body_id
+        body_id = obj.get_body_ids()[0] if is_robot else obj.body_id
 
         land_success = False
         # land for maximum 1 second, should fall down ~5 meters
@@ -405,7 +405,7 @@ class iGibsonEnv(BaseEnv):
             print("WARNING: Failed to land")
 
         if is_robot:
-            obj.robot_specific_reset()
+            obj.reset()
             obj.keep_still()
 
     def reset_variables(self):
