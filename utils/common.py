@@ -13,6 +13,7 @@ import glob
 from absl import logging
 import distutils.version
 from agent.common.common import TensorboardWriter
+import sys
 import functools
 import os
 import shlex
@@ -80,11 +81,11 @@ def to_spaces_Dict(data):
     for key,value in data.items():
       shape = list(value.shape)
       # if len(shape) == 1: shape.append(1)
-      ret[key] = Box(low=float(value.minimum), high=float(value.maximum), shape=shape, dtype=np.float32)
+      ret[key] = Box(low=float(-sys.float_info.max), high=float(sys.float_info.max), shape=shape, dtype=np.float32)
   else:
     shape = list(data.shape)
     # if len(shape) == 1: shape.append(1)
-    ret['prev_action'] = Box(low=float(data.minimum), high=float(data.maximum), shape=shape, dtype=np.float32)
+    ret['prev_action'] = Box(low=float(-sys.float_info.max), high=float(sys.float_info.max), shape=shape, dtype=np.float32)
   print(ret)
   return ret
 

@@ -20,8 +20,8 @@ def _pack_sequence_as(structure, flat_sequence):
     keys = list(structure.keys())
     for idx in range(len(flat_sequence) // len(keys)):
       tmp_dict = {}
-      for idx2 in range(3):
-        tmp_dict[keys[idx2]] = flat_sequence[idx * 3 + idx2]
+      for idx2 in range(4):
+        tmp_dict[keys[idx2]] = flat_sequence[idx * 4 + idx2]
       ret = tmp_dict
     return ret
 

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from agent.ppo.config.default import get_config
+import pickle
 import os
 from typing import Dict,List,Any,Optional
 import time
@@ -169,7 +170,7 @@ class PPOTrainer(BaseRLTrainer):
             )
         )
         self._nbuffers = 2 if self.ppo_cfg.use_double_buffered_sampler else 1
-
+        self.observation_spec.spaces.pop('global_occupancy_grid')
         self.rollouts = RolloutStorage(
             self.ppo_cfg.num_steps,
             self.num_parallel_environments,
@@ -182,6 +183,7 @@ class PPOTrainer(BaseRLTrainer):
         self.rollouts.to(self.device)
 
         observations = self.tf_env.reset().observation
+        observations.pop('global_occupancy_grid')
         # 获取批次大小
         batch_size = next(iter(observations.values())).shape[0]
 
@@ -194,6 +196,7 @@ class PPOTrainer(BaseRLTrainer):
                 item[key] = observations[key][i]
             formatted_data.append(item)
         observations = formatted_data
+        
 
         self._obs_batching_cache = ObservationBatchingCache()
         batch = batch_obs(
@@ -349,8 +352,8 @@ class PPOTrainer(BaseRLTrainer):
                 # checkpoint model
                 needs_checkpoint = self.should_checkpoint()
                 if rank0_only() and needs_checkpoint:
-                    self.save_checkpoint(
-                        f"ckpt.{self.count_checkpoints}.pth",
+                    self.save_agent(
+                        f"ckpt.{self.count_checkpoints}.pkl",
                         dict(
                             step=self.num_steps_done,
                             wall_time=(time.time() - self.t_start) + self.prev_time,
@@ -572,6 +575,7 @@ class PPOTrainer(BaseRLTrainer):
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
+                    info['occupancy_grid'] = observations[i]["global_occupancy_grid"]
                     # TODO move normalization / channel changing out of the policy and undo it here
                     frame = observations_to_image(
                         {k: v for k, v in batch.items() if k != 'task_obs'}, info
@@ -749,6 +753,7 @@ class PPOTrainer(BaseRLTrainer):
 
         outputs = self.tf_env.step(actions)
         step_type, rewards_l, discount, observations, info = outputs.step_type, outputs.reward, outputs.discount, outputs.observation, outputs.info
+        observations.pop('global_occupancy_grid')
         # 获取批次大小
         batch_size = next(iter(observations.values())).shape[0]
 
@@ -761,6 +766,7 @@ class PPOTrainer(BaseRLTrainer):
                 item[key] = observations[key][i]
             formatted_data.append(item)
         observations = formatted_data
+        
         try:
             dones = [False for _ in range(self.num_parallel_environments)] if info['done'][0] == False else [True for _ in range(self.num_parallel_environments)]
         except:
@@ -952,6 +958,39 @@ class PPOTrainer(BaseRLTrainer):
         )
 
 
+    def save_agent(self, file_name: str, extra_state: Optional[Dict] = None) -> None:
+        r"""Save the entire agent object to a file.
+
+        Args:
+            file_name: file name for saving the agent object.
+        """
+        if not os.path.exists(self.agent_config.CHECKPOINT_FOLDER):
+            os.makedirs(self.agent_config.CHECKPOINT_FOLDER)
+
+        agent = {
+            "agent": self.agent,
+            "config": self.agent_config,
+        }
+
+        if extra_state is not None:
+            agent["extra_state"] = extra_state
+        
+        agent_path = os.path.join(self.agent_config.CHECKPOINT_FOLDER, file_name)
+        with open(agent_path, 'wb') as f:
+            pickle.dump(agent, f)
+
+
+    def load_agent(self, file_name: str):
+        r"""Load the entire agent object from a file.
+
+        Args:
+            file_name: file name for loading the agent object.
+        """
+        agent_path = os.path.join(self.agent_config.CHECKPOINT_FOLDER, file_name)
+        with open(agent_path, 'rb') as f:
+            agent = pickle.load(f)
+
+        return agent
 
 
 

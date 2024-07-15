@@ -6,7 +6,7 @@ from agent.gibson_extension.tasks.point_nav_random_task import PointNavRandomTas
 from igibson.tasks.interactive_nav_random_task import InteractiveNavRandomTask
 from igibson.tasks.dynamic_nav_random_task import DynamicNavRandomTask
 from igibson.tasks.reaching_random_task import ReachingRandomTask
-from igibson.sensors.scan_sensor import ScanSensor
+from agent.gibson_extension.sensors.scan_sensor import ScanSensor
 from igibson.sensors.vision_sensor import VisionSensor
 from igibson.robots.robot_base import BaseRobot
 from igibson.external.pybullet_tools.utils import stable_z_on_aabb
@@ -173,12 +173,12 @@ class iGibsonEnv(BaseEnv):
                 low=0.0, high=1.0)
             scan_modalities.append('scan')
         if 'occupancy_grid' in self.output:
-            self.grid_resolution = self.config.get('grid_resolution', 128)
+            self.grid_resolution = self.config.get('grid_resolution', 512)
             self.occupancy_grid_space = gym.spaces.Box(low=0.0,
                                                        high=1.0,
                                                        shape=(self.grid_resolution,
                                                               self.grid_resolution, 1))
-            observation_space['occupancy_grid'] = self.occupancy_grid_space
+            observation_space['global_occupancy_grid'] = self.occupancy_grid_space
             scan_modalities.append('occupancy_grid')
 
         if len(vision_modalities) > 0:

@@ -4,6 +4,8 @@ import os
 import tqdm
 import imageio
 import logging
+import agent.visualization.maps as maps
+import cv2
 
 def images_to_video(
     images: List[np.ndarray],
@@ -91,11 +93,21 @@ def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
 
     frame = egocentric_view
 
-    # if "top_down_map" in info:
-    #     top_down_map = maps.colorize_draw_agent_and_fit_to_height(
-    #         info["top_down_map"], egocentric_view.shape[0]
-    #     )
-    #     frame = np.concatenate((egocentric_view, top_down_map), axis=1)
+    if "occupancy_grid" in info:
+        # top_down_map = maps.colorize_draw_agent_and_fit_to_height(
+        #     info["occupancy_grid"], egocentric_view.shape[0]
+        # )
+        top_down_map = info["occupancy_grid"]
+        #top_down_map的shape是(128,128,1)，我想要去除最后一个维度
+        top_down_map = top_down_map.squeeze()
+        top_down_map = cv2.resize(
+        top_down_map,
+        (egocentric_view.shape[0], egocentric_view.shape[0]),
+        interpolation=cv2.INTER_CUBIC,
+        )
+        top_down_map = cv2.cvtColor(top_down_map, cv2.COLOR_GRAY2RGB)
+        top_down_map = top_down_map * 255.0
+        frame = np.concatenate((egocentric_view, top_down_map), axis=1)
     return frame
 
 def draw_collision(view: np.ndarray, alpha: float = 0.4) -> np.ndarray:

@@ -276,12 +276,12 @@ class TFPyEnvironment(tf_environment.TFEnvironment):
 
     outputs = np.array(_isolated_current_time_step_py())
     
-    step_type, reward, discount, task_obs, rgb, depth, *info = (outputs[i::12] for i in range(12))
+    step_type, reward, discount, task_obs, rgb, depth, occupancy_grid, *info = (outputs[i::13] for i in range(13))
 
     step_type, reward, discount = np.vstack(step_type), np.vstack(reward), np.vstack(discount)
     step_type, reward, discount = np.stack(step_type, axis=0).reshape(-1,1), np.stack(reward, axis=0).reshape(-1,1), np.stack(discount, axis=0).reshape(-1,1)
 
-    flat_observations = [task_obs, rgb, depth]
+    flat_observations = [task_obs, rgb, depth, occupancy_grid]
 
     flat_observations = [np.stack(item, axis = 0) for item in flat_observations]
 
@@ -393,7 +393,7 @@ class TFPyEnvironment(tf_environment.TFEnvironment):
       num_environments = 4
 
       if len(outputs) // 6 == num_environments and len(flat_actions_numpy) == num_environments:
-        step_type, reward, discount, *flat_observations = (outputs[i::6] for i in range(6))
+        step_type, reward, discount, *flat_observations = (outputs[i::7] for i in range(7))
 
         step_type, reward, discount = np.stack(step_type, axis=0).reshape(-1,1), np.stack(reward, axis=0).reshape(-1,1), np.stack(discount, axis=0).reshape(-1,1)
 
@@ -402,12 +402,12 @@ class TFPyEnvironment(tf_environment.TFEnvironment):
         info = {}
         
       else:
-        step_type, reward, discount, task_obs, rgb, depth, *info = (outputs[i::12] for i in range(12))
+        step_type, reward, discount, task_obs, rgb, depth, occupancy_grid, *info = (outputs[i::13] for i in range(13))
 
         step_type, reward, discount = np.vstack(step_type), np.vstack(reward), np.vstack(discount)
         step_type, reward, discount = np.stack(step_type, axis=0).reshape(-1,1), np.stack(reward, axis=0).reshape(-1,1), np.stack(discount, axis=0).reshape(-1,1)
 
-        flat_observations = [task_obs, rgb, depth]
+        flat_observations = [task_obs, rgb, depth, occupancy_grid]
 
         flat_observations = [np.stack(item, axis = 0) for item in flat_observations]
 

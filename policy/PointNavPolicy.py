@@ -28,6 +28,7 @@ class PointNavResNetPolicy(Policy):
         backbone: str = "resnet18",
         normalize_visual_inputs: bool = False,
         force_blind_policy: bool = False,
+        num_envs: int = 1,
         **kwargs
     ):
         super().__init__(
@@ -43,6 +44,7 @@ class PointNavResNetPolicy(Policy):
                 force_blind_policy=force_blind_policy,
             ),
             2,
+            num_envs = num_envs
         )
 
     @classmethod
@@ -58,6 +60,7 @@ class PointNavResNetPolicy(Policy):
             backbone=config.RL.DDPPO.backbone,
             normalize_visual_inputs="rgb" in observation_space.spaces,
             force_blind_policy=config.FORCE_BLIND_POLICY,
+            num_envs = config.NUM_ENVIRONMENTS
         )
     
 
