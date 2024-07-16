@@ -127,7 +127,7 @@ class PyEnvironment(object):
     self._current_time_step = self._reset()
     return self._current_time_step
 
-  def step(self, action):
+  def step(self, action, *args):
     """Updates the environment according to the action and returns a `TimeStep`.
 
     If the environment returned a `TimeStep` with `StepType.LAST` at the
@@ -157,7 +157,7 @@ class PyEnvironment(object):
     if self._current_time_step is None:
       return self.reset()
 
-    self._current_time_step = self._step(action)
+    self._current_time_step = self._step(action, *args)
     return self._current_time_step
 
   def close(self):

@@ -185,7 +185,7 @@ class TFEnvironment(object):
     """
     return self._reset()
 
-  def step(self, action):
+  def step(self, action, *args):
     """Steps the environment according to the action.
 
     If the environment returned a `TimeStep` with `StepType.LAST` at the
@@ -215,7 +215,7 @@ class TFEnvironment(object):
         observation: A Tensor, or a nested dict, list or tuple of Tensors
           corresponding to `observation_spec()`.
     """
-    return self._step(action)
+    return self._step(action, *args)
 
   def render(self):
     """Renders a frame from the environment.

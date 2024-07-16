@@ -9,11 +9,13 @@ import time
 from collections import defaultdict, deque
 from torch.optim.lr_scheduler import LambdaLR
 import torch
+import json
 from agent.utils.common import to_spaces_Dict
 from absl import app
 from absl import flags
 from absl import logging
 import contextlib
+import copy
 import imageio
 import torch.nn as nn
 import gin
@@ -346,14 +348,14 @@ class PPOTrainer(BaseRLTrainer):
                     dict(value_loss=value_loss, action_loss=action_loss),
                     count_steps_delta,
                 )
-
+                # TODO: 多环境单个GPU训练还未实现
                 self._training_log(writer, losses, self.prev_time)
 
                 # checkpoint model
                 needs_checkpoint = self.should_checkpoint()
                 if rank0_only() and needs_checkpoint:
-                    self.save_agent(
-                        f"ckpt.{self.count_checkpoints}.pkl",
+                    self.save_checkpoint(
+                        f"ckpt.{self.count_checkpoints}.pth",
                         dict(
                             step=self.num_steps_done,
                             wall_time=(time.time() - self.t_start) + self.prev_time,
@@ -419,6 +421,7 @@ class PPOTrainer(BaseRLTrainer):
         if config.VERBOSE:
             logging.info(f"env config: {config}")
         self.model_ids = model_ids
+        self.env_to_pause = []
         self.init_envs(env_load_fn)
         self.set_agent()
 
@@ -478,6 +481,14 @@ class PPOTrainer(BaseRLTrainer):
 
         number_of_eval_episodes = self.config.TEST_EPISODE_COUNT
 
+        if number_of_eval_episodes == -1:
+            # 打开self.model_ids里面对应的json文件，总和里面的episode数量
+            for model_id in self.model_ids:
+                with open(model_id + ".json") as f:
+                    data = json.load(f)
+                    number_of_eval_episodes += len(data)
+            number_of_eval_episodes += 1
+
         pbar = tqdm.tqdm(total=number_of_eval_episodes)
         self.actor_critic.eval()
         while (
@@ -507,8 +518,7 @@ class PPOTrainer(BaseRLTrainer):
             # For backwards compatibility, we also call .item() to convert to
             # an int
             step_data = [a for a in actions.to(device="cpu")]
-
-            outputs = self.tf_env.step(step_data)
+            outputs = self.tf_env.step(step_data, self.env_to_pause)
 
             step_type, rewards_l, discount, observations, info = outputs.step_type, outputs.reward, outputs.discount, outputs.observation, outputs.info
             # 获取批次大小
@@ -524,10 +534,19 @@ class PPOTrainer(BaseRLTrainer):
                 formatted_data.append(item)
             observations = formatted_data
 
-            try:
-                dones = [False for _ in range(self.num_parallel_environments)] if info['done'][0] == False else [True for _ in range(self.num_parallel_environments)]
-            except:
-                dones = [False for _ in range(self.num_parallel_environments)]
+            # 创建列表
+            formatted_data = []
+
+            for i in range(batch_size):
+                item = {}
+                for key in info:
+                    item[key] = info[key][i].astype(np.float32)
+                formatted_data.append(item)
+            info = formatted_data
+
+            dones = []
+            for i in range(batch_size):
+                dones.append(False) if info[i]['done'] == False else dones.append(True)
 
             batch = batch_obs(
                 observations,
@@ -547,42 +566,75 @@ class PPOTrainer(BaseRLTrainer):
             )
             current_episode_reward += rewards
             n_envs = self.num_parallel_environments
+            envs_to_pause_for_pop = []
+            envs_to_pause_for_pop_idx = 0
             for i in range(n_envs):
+                
+                if i in self.env_to_pause:
+                    continue
 
                 # episode ended
-                if not not_done_masks[i].item():
+                if not not_done_masks[envs_to_pause_for_pop_idx].item():
                     pbar.update()
                     episode_stats = {}
-                    episode_stats["reward"] = current_episode_reward[i].item()
+                    episode_stats["reward"] = current_episode_reward[envs_to_pause_for_pop_idx].item()
                     episode_stats.update(
-                        self._extract_scalars_from_info(info)
+                        self._extract_scalars_from_info(info[envs_to_pause_for_pop_idx])
                     )
-                    current_episode_reward[i] = 0
-                    stats_episodes[self.tf_env._env._envs[0].current_episode] = episode_stats
+                    current_episode_reward[envs_to_pause_for_pop_idx] = 0
+                    stats_episodes[self.tf_env._env._envs[i].scene_id + ':' + str(self.tf_env._env._envs[i].current_episode)] = episode_stats
 
                     if len(self.config.VIDEO_OPTION) > 0:
                         generate_video(
                             video_option=self.config.VIDEO_OPTION,
                             video_dir=self.config.VIDEO_DIR,
-                            images=rgb_frames[i],
-                            episode_id=self.tf_env._env._envs[0].current_episode,
+                            images=rgb_frames[envs_to_pause_for_pop_idx],
+                            episode_id=self.tf_env._env._envs[i].current_episode,
+                            scene_id=self.tf_env._env._envs[i].scene_id,
                             checkpoint_idx=checkpoint_index,
-                            metrics=self._extract_scalars_from_info(info),
+                            metrics=self._extract_scalars_from_info(info[envs_to_pause_for_pop_idx]),
                             tb_writer=writer,
                         )
 
-                        rgb_frames[i] = []
+                        rgb_frames[envs_to_pause_for_pop_idx] = []
+
+                        prev_actions[envs_to_pause_for_pop_idx] = torch.zeros(
+                            2, device=self.device, dtype=torch.float32
+                        )
+
+                    if self.tf_env._env._envs[i].current_episode == self.tf_env._env._envs[i].task.total_episodes:
+                        envs_to_pause_for_pop.append(envs_to_pause_for_pop_idx)
+                        self.env_to_pause.append(i)
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
-                    info['occupancy_grid'] = observations[i]["global_occupancy_grid"]
+                    info[envs_to_pause_for_pop_idx]['occupancy_grid'] = observations[envs_to_pause_for_pop_idx]["global_occupancy_grid"]
                     # TODO move normalization / channel changing out of the policy and undo it here
                     frame = observations_to_image(
-                        {k: v for k, v in batch.items() if k != 'task_obs'}, info
+                        {k: v for k, v in observations[envs_to_pause_for_pop_idx].items() if k != 'task_obs'}, info[envs_to_pause_for_pop_idx]
                     )
-                    rgb_frames[i].append(frame)
+                    rgb_frames[envs_to_pause_for_pop_idx].append(frame)
+
+                envs_to_pause_for_pop_idx += 1
 
             not_done_masks = not_done_masks.to(device=self.device)
+
+            state_index = list(range(batch_size))
+            for idx in reversed(envs_to_pause_for_pop):
+                state_index.pop(idx)
+
+            # indexing along the batch dimensions
+            test_recurrent_hidden_states = test_recurrent_hidden_states[
+                state_index
+            ]
+            not_done_masks = not_done_masks[state_index]
+            current_episode_reward = current_episode_reward[state_index]
+            prev_actions = prev_actions[state_index]
+
+            for k, v in batch.items():
+                batch[k] = v[state_index]
+
+            rgb_frames = [rgb_frames[i] for i in state_index]
 
         num_episodes = len(stats_episodes)
         aggregated_stats = {}
@@ -967,8 +1019,10 @@ class PPOTrainer(BaseRLTrainer):
         if not os.path.exists(self.agent_config.CHECKPOINT_FOLDER):
             os.makedirs(self.agent_config.CHECKPOINT_FOLDER)
 
+        agent_clone = copy.deepcopy(self.agent)
+        agent_clone.actor_critic.to("cpu")
         agent = {
-            "agent": self.agent,
+            "agent": agent_clone,
             "config": self.agent_config,
         }
 
@@ -991,6 +1045,43 @@ class PPOTrainer(BaseRLTrainer):
             agent = pickle.load(f)
 
         return agent
+
+    def generate_data(
+        self,
+        num_episodes: int,
+        env_load_fn: Any = None,
+        model_ids: Any = None,
+    ) -> None:
+        r"""Evaluates a single checkpoint.
+
+        Args:
+            checkpoint_path: path of checkpoint
+            writer: tensorboard writer object for logging to tensorboard
+            checkpoint_index: index of cur checkpoint for logging
+
+        Returns:
+            None
+        """
+        self.gpu = self.FLAGS.gpu_c
+        data = {model_id: {} for model_id in model_ids}
+        num_envs = len(model_ids)
+        imageio.plugins.ffmpeg.download()
+        self.model_ids = model_ids
+        self.init_envs(env_load_fn)
+
+        for idx in range(num_episodes):
+            self.tf_env.reset()
+            for env_idx in range(num_envs):
+                data[self.tf_env._env._envs[env_idx].scene_id][self.tf_env._env._envs[env_idx].current_episode] = [self.tf_env._env._envs[env_idx].task.target_pos.tolist(),
+                                                                                                                   self.tf_env._env._envs[env_idx].task.initial_pos.tolist(),
+                                                                                                                   self.tf_env._env._envs[env_idx].task.initial_orn.tolist()]
+                
+        # 保存为json文件
+        for k,v in data.items():
+            with open(f'{k}.json', 'w') as f:
+                json.dump(v, f)
+
+
 
 
 

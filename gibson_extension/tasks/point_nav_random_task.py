@@ -3,6 +3,8 @@ from igibson.utils.utils import l2_distance
 import pybullet as p
 import logging
 import numpy as np
+import json
+import os
 
 
 class PointNavRandomTask(PointNavFixedTask):
@@ -15,6 +17,10 @@ class PointNavRandomTask(PointNavFixedTask):
         super(PointNavRandomTask, self).__init__(env)
         self.target_dist_min = self.config.get('target_dist_min', 1.0)
         self.target_dist_max = self.config.get('target_dist_max', 10.0)
+        self.test = self.config.get('test', False)
+        if self.test:
+            self.episode_data = json.load(open(env.config['scene_id'] + '.json', 'r'))
+            self.total_episodes = len(self.episode_data)
 
     def sample_initial_pose_and_target_pos(self, env):
         """
@@ -81,8 +87,15 @@ class PointNavRandomTask(PointNavFixedTask):
         # removed cached state to prevent memory leak
         p.removeState(state_id)
 
-        self.target_pos = target_pos
-        self.initial_pos = initial_pos
-        self.initial_orn = initial_orn
+        if not self.test:
+            self.target_pos = target_pos
+            self.initial_pos = initial_pos
+            self.initial_orn = initial_orn
+        else:
+            # 根据env.current_episode读取episode_data的数据
+            episode_idx = str(env.current_episode + 1)
+            self.target_pos = np.array(self.episode_data[episode_idx][0])
+            self.initial_pos = np.array(self.episode_data[episode_idx][1])
+            self.initial_orn = np.array(self.episode_data[episode_idx][2])
 
         super(PointNavRandomTask, self).reset_agent(env)

@@ -337,7 +337,7 @@ class TFPyEnvironment(tf_environment.TFEnvironment):
   
   # Make sure this is called without conversion from tf.function.
   # TODO(b/123600776): Remove override.
-  def _step(self, actions):
+  def _step(self, actions, *args):
     """
     Returns a PyTorch tensor representing the environment step.
 
@@ -363,8 +363,8 @@ class TFPyEnvironment(tf_environment.TFEnvironment):
 
     def _step_py(*flattened_actions):
         with self._lock:
-            packed = self._pack_sequence_as(self.action_spec(), flattened_actions)
-            self._time_step = self._env.step(packed)
+            flattened_actions = np.stack(flattened_actions, axis=0)
+            self._time_step = self._env.step(flattened_actions, *args)
             return self._flatten(self._time_step)
 
     def _isolated_step_py(*flattened_actions):

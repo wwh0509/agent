@@ -107,7 +107,7 @@ class ParallelPyEnvironment(py_environment.PyEnvironment):
     for env, model_id in zip(self._envs, model_ids):
       env.reload_model(model_id)
 
-  def _step(self, actions):
+  def _step(self, actions, *args):
     """Forward a batch of actions to the wrapped environments.
 
     Args:
@@ -119,9 +119,19 @@ class ParallelPyEnvironment(py_environment.PyEnvironment):
     Returns:
       Batch of observations, rewards, and done flags.
     """
-    time_steps = [
-        env.step(action, self._blocking)
-        for env, action in zip(self._envs, self._unstack_actions(actions))]
+    skip_indices = args[0] if args else []
+
+    unstacked_actions = self._unstack_actions(actions)
+    time_steps = []
+    action_idx = 0
+
+    for idx, env in enumerate(self._envs):
+        if idx in skip_indices:
+            continue
+        else:
+            action = unstacked_actions[action_idx]
+            time_steps.append(env.step(action, self._blocking))
+            action_idx += 1
     # When blocking is False we get promises that need to be called.
     if not self._blocking:
       time_steps = [promise() for promise in time_steps]
@@ -143,13 +153,17 @@ class ParallelPyEnvironment(py_environment.PyEnvironment):
   def _unstack_actions(self, batched_actions):
     """Returns a list of actions from potentially nested batch of actions."""
     # Convert batched actions to a list of tensors if it's not already
-    # if isinstance(batched_actions, torch.Tensor):
-    #     batched_actions = batched_actions.tolist()
+    if isinstance(batched_actions, torch.Tensor):
+        batched_actions = batched_actions.tolist()
     
-    # Flatten the batched actions
-    flattened_actions = torch.flatten(batched_actions, start_dim=0).unsqueeze(0)
-
-    unstacked_actions = flattened_actions.numpy()
+    # Convert the list back to a tensor to manipulate
+    batched_actions = torch.tensor(batched_actions)
+    
+    # Reshape the batched actions back to its original shape
+    reshaped_actions = batched_actions.view(-1, 2)
+    
+    # Convert reshaped actions to numpy array and then to a list of lists
+    unstacked_actions = reshaped_actions.numpy().tolist()
     
     return unstacked_actions
 

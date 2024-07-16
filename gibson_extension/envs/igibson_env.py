@@ -55,6 +55,7 @@ class iGibsonEnv(BaseEnv):
                                          device_idx=device_idx,
                                          )
         self.automatic_reset = automatic_reset
+        self.scene_id = scene_id
 
     def load_task_setup(self):
         """

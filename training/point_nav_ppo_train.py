@@ -72,13 +72,31 @@ flags.DEFINE_integer('gpu_g', 1,
 flags.DEFINE_boolean('random_position', False,
                      'Whether to randomize initial and target position')
 
+flags.DEFINE_boolean('generate_data', False,
+                     'generate data')
+
 FLAGS = flags.FLAGS
 
 
 def main(argv):
     FLAGS(argv)
     trainer = PPOTrainer(FLAGS)
-    if FLAGS.eval_only == False:
+
+    if FLAGS.generate_data == True:
+        trainer.generate_data(
+            env_load_fn=lambda model_id, mode, device_idx: suite_gibson.load(
+                config_file=FLAGS.config_file,
+                model_id=model_id,
+                env_mode=mode,
+                action_timestep=FLAGS.action_timestep,
+                physics_timestep=FLAGS.physics_timestep,
+                device_idx=device_idx,
+            ),
+            model_ids=FLAGS.model_ids,
+            num_episodes=5,
+        )
+
+    elif FLAGS.eval_only == False:
         trainer.train(
             env_load_fn=lambda model_id, mode, device_idx: suite_gibson.load(
                 config_file=FLAGS.config_file,
@@ -89,7 +107,7 @@ def main(argv):
                 device_idx=device_idx,
             ),
         )
-    else:
+    elif FLAGS.eval_only == True:
         trainer.eval(
             env_load_fn=lambda model_id, mode, device_idx: suite_gibson.load(
                 config_file=FLAGS.config_file,
