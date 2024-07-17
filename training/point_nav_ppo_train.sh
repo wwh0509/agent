@@ -14,6 +14,6 @@ python -u point_nav_ppo_train.py \
     --eval_interval 10000000 \
     --gpu_c 0 \
     --gpu_g 0 \
-    --num_parallel_environments 1 \
-    --model_ids Rs_int \
-    2>&1 | grep -v "Created DrawableGroup" > turtle_output_clamp_igibson2.2.2_pickle.log \
+    --num_parallel_environments 2 \
+    --model_ids "Rs_int, Benevolence_0_int" \
+    2>&1 | grep -v "Created DrawableGroup" > turtle_output_clamp_igibson2.2.2_multi_envs.log \

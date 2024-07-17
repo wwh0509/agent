@@ -818,11 +818,20 @@ class PPOTrainer(BaseRLTrainer):
                 item[key] = observations[key][i]
             formatted_data.append(item)
         observations = formatted_data
+
+        # 创建列表
+        formatted_data = []
+
+        for i in range(batch_size):
+            item = {}
+            for key in info:
+                item[key] = info[key][i]
+            formatted_data.append(item)
+        info = formatted_data
         
-        try:
-            dones = [False for _ in range(self.num_parallel_environments)] if info['done'][0] == False else [True for _ in range(self.num_parallel_environments)]
-        except:
-            dones = [False for _ in range(self.num_parallel_environments)]
+        dones = []
+        for i in range(batch_size):
+            dones.append(False) if info[i]['done'] == False else dones.append(True)
 
         t_update_stats = time.time()
         batch = batch_obs(
@@ -849,7 +858,7 @@ class PPOTrainer(BaseRLTrainer):
         current_ep_reward = self.current_episode_reward[env_slice]
         self.running_episode_stats["reward"][env_slice] += current_ep_reward.where(done_masks, current_ep_reward.new_zeros(()))  # type: ignore
         self.running_episode_stats["count"][env_slice] += done_masks.float()  # type: ignore
-        for k, v_k in self._extract_scalars_from_infos([info]).items():
+        for k, v_k in self._extract_scalars_from_infos(info).items():
             v = torch.tensor(
                 v_k,
                 dtype=torch.float,
