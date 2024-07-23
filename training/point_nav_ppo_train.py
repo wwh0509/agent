@@ -75,6 +75,9 @@ flags.DEFINE_boolean('random_position', False,
 flags.DEFINE_boolean('generate_data', False,
                      'generate data')
 
+flags.DEFINE_boolean('num_episodes', False,
+                     'the amount of episodes')
+
 FLAGS = flags.FLAGS
 
 
@@ -93,7 +96,7 @@ def main(argv):
                 device_idx=device_idx,
             ),
             model_ids=FLAGS.model_ids,
-            num_episodes=5,
+            num_episodes=FLAGS.num_episodes,
         )
 
     elif FLAGS.eval_only == False:
