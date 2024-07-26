@@ -3,6 +3,8 @@ from igibson.envs.env_base import BaseEnv
 from igibson.tasks.room_rearrangement_task import RoomRearrangementTask
 from agent.gibson_extension.tasks.point_nav_fixed_task import PointNavFixedTask
 from agent.gibson_extension.tasks.point_nav_random_task import PointNavRandomTask
+from agent.gibson_extension.tasks.multi_point_nav_task import MultiPointNavTask
+from agent.gibson_extension.tasks.multi_point_nav_random_task import MultiPointRandomNavTask
 from igibson.tasks.interactive_nav_random_task import InteractiveNavRandomTask
 from igibson.tasks.dynamic_nav_random_task import DynamicNavRandomTask
 from igibson.tasks.reaching_random_task import ReachingRandomTask
@@ -97,6 +99,10 @@ class iGibsonEnv(BaseEnv):
             self.task = ReachingRandomTask(self)
         elif self.config['task'] == 'room_rearrangement':
             self.task = RoomRearrangementTask(self)
+        elif self.config['task'] == 'multi_point_nav':
+            self.task = MultiPointNavTask(self)
+        elif self.config['task'] == 'multi_point_nav_random':
+            self.task = MultiPointRandomNavTask(self)
         else:
             self.task = None
 

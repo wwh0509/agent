@@ -1081,7 +1081,7 @@ class PPOTrainer(BaseRLTrainer):
         for idx in range(num_episodes):
             self.tf_env.reset()
             for env_idx in range(num_envs):
-                data[self.tf_env._env._envs[env_idx].scene_id][self.tf_env._env._envs[env_idx].current_episode] = [self.tf_env._env._envs[env_idx].task.target_pos.tolist(),
+                data[self.tf_env._env._envs[env_idx].scene_id][self.tf_env._env._envs[env_idx].current_episode] = [self.tf_env._env._envs[env_idx].task.target_pos_list.tolist(),
                                                                                                                    self.tf_env._env._envs[env_idx].task.initial_pos.tolist(),
                                                                                                                    self.tf_env._env._envs[env_idx].task.initial_orn.tolist()]
                 
