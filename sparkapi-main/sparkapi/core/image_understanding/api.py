@@ -54,6 +54,7 @@ class SparkAPI(object):
 
         while True:
             res = json.loads(wss.recv())
+            print(res)
             content = res['payload']['choices']['text'][0]['content']
             yield content
             if res['header']['status'] == 2:

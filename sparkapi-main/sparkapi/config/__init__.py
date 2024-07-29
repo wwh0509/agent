@@ -8,7 +8,7 @@ class SparkConfig(BaseSettings):
     api_model: str
 
     model_config = SettingsConfigDict(
-        env_file='D:/workspace/api/sparkapi-main/sparkapi/config/sparkapi.env',
+        env_file='/home/wenhao/RL/rl/agent/sparkapi-main/sparkapi/config/sparkapi.env',
         env_prefix='SPARK_',
         case_sensitive=False,
     )
@@ -20,7 +20,7 @@ class ChatConfig(BaseSettings):
     top_k: int = 4
 
     model_config = SettingsConfigDict(
-        env_file='D:/workspace/api/sparkapi-main/sparkapi/config/sparkapi.env',
+        env_file='/home/wenhao/RL/rl/agent/sparkapi-main/sparkapi/config/sparkapi.env',
         env_prefix='SPARK_CHAT_',
         case_sensitive=False,
     )

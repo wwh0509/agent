@@ -17,7 +17,7 @@ setup(
     url=version_info['url'],
     license='MIT License',
     install_requires=BASE_DIR.joinpath('requirements.txt').read_text().strip().split(),
-    python_requires='>=3.8',
+    python_requires='>=3.7',
     packages=find_packages(),
     include_package_data=True,
     entry_points={'console_scripts': [
