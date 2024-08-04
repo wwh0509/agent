@@ -8,5 +8,6 @@ training/tb/
 
 *.out
 
-*.env
+sparkapi.env
+example.env
 
