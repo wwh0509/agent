@@ -277,7 +277,7 @@ class MultiPointNavTask(BaseTask):
             self.finish_point += 1
             self.partly_success = False
             self.target_pos = self.target_pos_list[self.finish_point]
-            self.target_pos  = ImageUnderstanding('/home/wenhao/RL/rl/agent/img/t1.png')
+            self.target_pos  = ImageUnderstanding('/home/wenhao/RL/rl/agent/img/t10.png')
             self.target_pos = np.array(self.target_pos)
         self.step_visualization(env)
         new_robot_pos = env.robots[0].get_position()[:2]

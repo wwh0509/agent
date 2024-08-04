@@ -7,3 +7,5 @@ training/tb/
 *.pth
 
 *.out
+
+*.env
