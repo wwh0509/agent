@@ -4,10 +4,11 @@ training/tb/
 
 *.pyc
 
+*.env
+
 *.pth
 
 *.out
 
-sparkapi.env
-example.env
+
 
