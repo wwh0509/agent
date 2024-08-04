@@ -12,3 +12,5 @@ training/tb/
 
 
 
+sparkapi-main/example.env
+sparkapi-main/sparkapi/config/sparkapi.env
