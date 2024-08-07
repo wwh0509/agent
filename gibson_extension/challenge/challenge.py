@@ -1,8 +1,8 @@
-from agent.gibson_extension.utils import parse_config
+from agent.gibson_extension.utils.utils import parse_config
 import numpy as np
 import json
 import os
-from agent.gibson_extension.envs import iGibsonEnv
+from agent.gibson_extension.envs.igibson_env import iGibsonEnv
 import logging
 logging.getLogger().setLevel(logging.WARNING)
 
@@ -13,7 +13,7 @@ class Challenge:
         self.split = os.environ['SPLIT']
         self.episode_dir = os.environ['EPISODE_DIR']
         self.eval_episodes_per_scene = os.environ.get(
-            'EVAL_EPISODES_PER_SCENE', 100)
+            'EVAL_EPISODES_PER_SCENE', 5)
 
     def submit(self, agent):
         env_config = parse_config(self.config_file)
@@ -25,6 +25,9 @@ class Challenge:
         elif task == 'social_nav_random':
             metrics = {key: 0.0 for key in [
                 'success', 'stl', 'psc', 'episode_return']}
+        elif task == 'point_nav_random':
+            metrics = {key: 0.0 for key in [
+                'success', 'spl', 'episode_return']}
         else:
             assert False, 'unknown task: {}'.format(task)
 
@@ -43,6 +46,7 @@ class Challenge:
             env_config['scene_id'] = scene_id
             env_config['load_scene_episode_config'] = True
             env_config['scene_episode_config_name'] = json_file
+            print(env_config)
             env = iGibsonEnv(config_file=env_config,
                              mode='headless',
                              action_timestep=1.0 / 10.0,

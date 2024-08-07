@@ -75,7 +75,7 @@ flags.DEFINE_boolean('random_position', False,
 flags.DEFINE_boolean('generate_data', False,
                      'generate data')
 
-flags.DEFINE_boolean('num_episodes', False,
+flags.DEFINE_integer('num_episodes', 5,
                      'the amount of episodes')
 
 FLAGS = flags.FLAGS

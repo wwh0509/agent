@@ -19,7 +19,7 @@ class PointNavRandomTask(PointNavFixedTask):
         self.target_dist_max = self.config.get('target_dist_max', 10.0)
         self.test = self.config.get('test', False)
         if self.test:
-            self.episode_data = json.load(open(env.config['scene_id'] + '.json', 'r'))
+            self.episode_data = json.load(open(env.config['scene_episode_config_name'], 'r'))["episode"]
             self.total_episodes = len(self.episode_data)
 
     def sample_initial_pose_and_target_pos(self, env):
@@ -93,9 +93,9 @@ class PointNavRandomTask(PointNavFixedTask):
             self.initial_orn = initial_orn
         else:
             # 根据env.current_episode读取episode_data的数据
-            episode_idx = str(env.current_episode + 1)
-            self.target_pos = np.array(self.episode_data[episode_idx][0])
-            self.initial_pos = np.array(self.episode_data[episode_idx][1])
-            self.initial_orn = np.array(self.episode_data[episode_idx][2])
+            episode_idx = int(env.current_episode)
+            self.target_pos = np.array(self.episode_data[episode_idx]["target_pos"])
+            self.initial_pos = np.array(self.episode_data[episode_idx]["initial_pos"])
+            self.initial_orn = np.array(self.episode_data[episode_idx]["initial_orn"])
 
         super(PointNavRandomTask, self).reset_agent(env)

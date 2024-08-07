@@ -1077,18 +1077,31 @@ class PPOTrainer(BaseRLTrainer):
         imageio.plugins.ffmpeg.download()
         self.model_ids = model_ids
         self.init_envs(env_load_fn)
+        ret = [{"config":{}, "episode":[]} for _ in range(num_envs)]
+        for idx in range(num_envs):
+            ret[idx]["config"]["num_episodes"] = num_episodes
+            ret[idx]["config"]["numpy_seed"] = 0
+            ret[idx]["config"]["scene_id"] = self.tf_env._env._envs[idx].scene_id
 
         for idx in range(num_episodes):
             self.tf_env.reset()
             for env_idx in range(num_envs):
+                tmp_episode = {}
                 data[self.tf_env._env._envs[env_idx].scene_id][self.tf_env._env._envs[env_idx].current_episode] = [self.tf_env._env._envs[env_idx].task.target_pos.tolist(),
                                                                                                                    self.tf_env._env._envs[env_idx].task.initial_pos.tolist(),
                                                                                                                    self.tf_env._env._envs[env_idx].task.initial_orn.tolist()]
-                
+                tmp_episode["initial_orn"] = self.tf_env._env._envs[env_idx].task.initial_orn.tolist()
+                tmp_episode["initial_pos"] = self.tf_env._env._envs[env_idx].task.initial_pos.tolist()
+                tmp_episode["target_pos"] = self.tf_env._env._envs[env_idx].task.target_pos.tolist()
+                ret[env_idx]["episode"].append(tmp_episode)
         # 保存为json文件
-        for k,v in data.items():
-            with open(f'{k}.json', 'w') as f:
-                json.dump(v, f)
+        # for k,v in data.items():
+        #     with open(f'{k}.json', 'w') as f:
+        #         json.dump(v, f)
+
+        for idx in range(num_envs):
+            with open(f'{model_ids[idx]}.json', 'w') as f:
+                json.dump(ret[idx], f)
 
 
 
