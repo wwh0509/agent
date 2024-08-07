@@ -46,7 +46,7 @@ class Challenge:
             env_config['scene_id'] = scene_id
             env_config['load_scene_episode_config'] = True
             env_config['scene_episode_config_name'] = json_file
-            print(env_config)
+
             env = iGibsonEnv(config_file=env_config,
                              mode='headless',
                              action_timestep=1.0 / 10.0,
@@ -73,6 +73,8 @@ class Challenge:
                 for key in metrics:
                     if key in info:
                         metrics[key] += info[key]
+                        
+            env_config = parse_config(self.config_file)
 
         for key in metrics:
             metrics[key] /= total_num_episodes

@@ -19,7 +19,9 @@ class PointNavRandomTask(PointNavFixedTask):
         self.target_dist_max = self.config.get('target_dist_max', 10.0)
         self.test = self.config.get('test', False)
         if self.test:
-            self.episode_data = json.load(open(env.config['scene_episode_config_name'], 'r'))["episode"]
+            scene_episode_config_name = self.config.get('scene_episode_config_name')
+            self.episode_data = json.load(open(scene_episode_config_name + '/' + env.scene.scene_id + ".json", 'r'))["episode"] if not scene_episode_config_name.endswith("json") else \
+                json.load(open(scene_episode_config_name, 'r'))["episode"]
             self.total_episodes = len(self.episode_data)
 
     def sample_initial_pose_and_target_pos(self, env):

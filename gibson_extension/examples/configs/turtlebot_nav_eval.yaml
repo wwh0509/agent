@@ -34,6 +34,7 @@ goal_format: polar
 task_obs_dim: 4
 test: True
 episode_data_file_path: episode_data
+scene_episode_config_name: /home/wenhao/RL/iGibsonChallenge2021/gibson_challenge_data_2021/episodes_data/point_nav/minival
 
 # reward
 reward_type: l2
